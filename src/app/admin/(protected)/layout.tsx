@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { logout } from "@/actions/auth";
+import { Toaster } from "@/components/admin/toaster";
 import { requireAdmin } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+      <Toaster />
     </div>
   );
 }

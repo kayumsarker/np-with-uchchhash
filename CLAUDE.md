@@ -114,14 +114,21 @@ Public pages static/cached, revalidated on admin changes. next/image everywhere 
 
 ## Phases (STOP after each)
 
-0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) · 4 Public pages · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
+0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) ✅ · 4 Public pages · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
 
 ## Git
 
 Remote: https://github.com/kayumsarker/np-with-uchchhash.git, branch `main`. After each approved phase: `git status` → confirm no secrets → commit → push.
 
+## Phase 3 decisions (done)
+
+- Zod v4 validation (`src/lib/validation/`), plain Tailwind + native `<dialog>` confirm, lucide-react icons, sonner toasts (admin only). Vitest (`npm test`) for `src/lib/youtube.ts` + `src/lib/slug.ts`; `@types/node` ^24.
+- Slug auto from title, editable; published slug change → old URL 404s (form warns). No draft preview.
+- Cache tags in `src/lib/cache-tags.ts` (`courses`, `course:<id>`, `settings`) — Phase 4 public reads must `cacheTag()` these. Actions call `updateTag` + `refresh()`.
+- Admin forms submit via onSubmit (no React form reset); actions return `ActionState`. Edit pages show `MissingNotice` instead of `notFound()`.
+- `next.config.ts` images allow `i.ytimg.com/vi/**`. Thumbnail/photo uploads deferred to Phase 6 (TODOs).
+
 ## Open questions (ask before the relevant phase)
 
-- Validation lib (rec: Zod v4); YouTube embed (rec: custom component); admin UI (plain Tailwind + native dialog vs shadcn/ui), toasts, icons (lucide-react?); Cloudinary approach (rec: SDK + custom fetch); tests (rec: Vitest for YouTube parser).
-- Slug auto + editable; admin draft preview.
+- YouTube embed (rec: custom component); Cloudinary approach (rec: SDK + custom fetch).
 - Unpublished course → chapters 404; Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; analytics.
