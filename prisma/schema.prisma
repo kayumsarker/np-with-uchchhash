@@ -1,0 +1,90 @@
+// Prisma 7: connection URLs live in prisma.config.ts (CLI) and src/lib/db.ts (runtime adapter).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Category {
+  SSC
+  HSC
+  ADVANCED
+}
+
+enum ResourceType {
+  PDF
+  IMAGE
+  LINK
+}
+
+model Course {
+  id                String    @id @default(cuid())
+  title             String
+  slug              String    @unique
+  description       String // Markdown
+  category          Category
+  thumbnailUrl      String?
+  thumbnailPublicId String?
+  order             Int       @default(0) // order within category
+  isFeatured        Boolean   @default(false)
+  isPublished       Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  chapters          Chapter[]
+
+  @@index([category, order])
+}
+
+model Chapter {
+  id          String     @id @default(cuid())
+  courseId    String
+  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  slug        String
+  description String? // Markdown
+  youtubeUrl  String
+  youtubeId   String
+  order       Int        @default(0)
+  isPublished Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  resources   Resource[]
+
+  @@unique([courseId, slug])
+  @@index([courseId, order])
+}
+
+model Resource {
+  id                 String       @id @default(cuid())
+  title              String
+  description        String? // Markdown
+  type               ResourceType
+  url                String
+  cloudinaryPublicId String?
+  category           Category?
+  chapterId          String?
+  chapter            Chapter?     @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  order              Int          @default(0)
+  isPublished        Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([chapterId, order])
+}
+
+model SiteSettings {
+  id            Int      @id @default(1) // single row
+  tutorName     String
+  tagline       String
+  aboutContent  String // Markdown
+  photoUrl      String?
+  photoPublicId String?
+  youtubeUrl    String?
+  facebookUrl   String?
+  instagramUrl  String?
+  updatedAt     DateTime @updatedAt
+}

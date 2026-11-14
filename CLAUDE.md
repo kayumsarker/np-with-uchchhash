@@ -27,7 +27,15 @@ Free physics learning platform for tutor **Uchchhash**. All content free, no pay
   - **Cache Components ON** (`cacheComponents: true`, `partialPrefetching: true` in `next.config.ts`) — chosen because Next 17 makes them mandatory. Public data reads use `"use cache"` + `cacheTag()`; admin mutations call `updateTag()` / `revalidateTag()` so public pages update immediately.
 - Tailwind CSS **v4** (CSS-first config; no `tailwind.config.js`), wired via `@tailwindcss/turbopack` loader in `next.config.ts`.
 - GSAP + `@gsap/react` (`useGSAP`) for animation.
-- Prisma ORM **7.10.1 (stable, pinned)** — npm `latest` tag points to 8.0.0-rc; do NOT use it. Prisma 7: `prisma.config.ts`, driver adapter (`@prisma/adapter-pg`), explicit generated client `output`, env not auto-loaded. (To be confirmed against docs in Phase 1.)
+- Prisma ORM **7.10.1 (stable, pinned exact)** — npm `latest` tag points to 8.0.0-rc; do NOT use it. Verified Prisma 7 setup:
+  - `prisma.config.ts`: `datasource.url = DIRECT_URL` (CLI/migrations, port 5432). `directUrl` no longer exists in v7. Seed configured at `migrations.seed = "tsx prisma/seed.ts"`.
+  - Runtime: `src/lib/db.ts` exports `db` = `PrismaClient` + `PrismaPg` adapter on `DATABASE_URL` (6543, `?pgbouncer=true` kept, works). Singleton across dev hot reloads.
+  - Env loading: Prisma 7 loads no env files → Node built-in `process.loadEnvFile(".env.local")` (ignored if ENOENT). No `dotenv` package.
+  - Generator `prisma-client`, output `src/generated/prisma` (gitignored, rebuilt by `postinstall: prisma generate`). Import: `@/generated/prisma/client`.
+  - No `"type": "module"` in package.json (not needed so far).
+  - Seeding is never automatic: `npm run db:seed`. Migrations: `npm run db:migrate`. Studio: `npm run db:studio`.
+  - npm 11 `allowScripts`: install scripts approved for `prisma`, `@prisma/engines`, `esbuild`.
+  - Verified: Next.js `"use cache"` function reading via `db` prerenders fine with Cache Components.
 - Supabase PostgreSQL + Supabase Auth (admin login only) via `@supabase/ssr`. New `sb_publishable_` key; prefer `getClaims()` for server checks (confirm in Phase 2).
 - Cloudinary for images + PDFs, **signed uploads only**. Cloud name `np-with-uchchhash`, PDF delivery enabled.
 - YouTube lite embed: thumbnail first, iframe loads only on click, `youtube-nocookie.com` domain.
@@ -37,7 +45,7 @@ Free physics learning platform for tutor **Uchchhash**. All content free, no pay
 ## Environment variables (`.env.example`)
 
 DATABASE_URL (transaction pooler 6543, `?pgbouncer=true`), DIRECT_URL (session pooler 5432, migrations), NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, ADMIN_EMAILS (comma-separated), NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, NEXT_PUBLIC_SITE_URL.
-Supabase: Singapore region, public signups DISABLED, admin user created manually.
+Supabase: public signups DISABLED, admin user created manually. Current DB is **ap-south-1 (Mumbai)**; developer may recreate in Singapore later → then update `.env.local`, run `npm run db:migrate` + `npm run db:seed`. Pick Vercel function region to match the DB in Phase 7.
 
 ## Folder structure (approved)
 
@@ -63,14 +71,15 @@ src/
 .env.example  CLAUDE.md  AGENTS.md  prisma.config.ts  next.config.ts
 ```
 
-## Data model (DRAFT — confirm final schema before migrating)
+## Data model (APPROVED + migrated: `prisma/migrations/*_init`) — source of truth is `prisma/schema.prisma`
 
-- enum Category { SSC, HSC, ADVANCED }; enum ResourceType { PDF, IMAGE, LINK }
-- Course: id, title, slug (unique), description, category, thumbnailUrl?, thumbnailPublicId?, order, isPublished (default false), createdAt, updatedAt, chapters[]
-- Chapter: id, courseId (cascade delete), title, slug (unique per course), description?, youtubeUrl, youtubeId, order, isPublished, timestamps, resources[]
-- Resource: id, title, description?, type, url, cloudinaryPublicId?, category?, chapterId?, order, isPublished, timestamps
-- SiteSettings (single row): tutorName, tagline, aboutContent, photoUrl?, photoPublicId?, youtubeUrl?, facebookUrl?, + other socials (TBD)
+- IDs: `cuid()` strings. All description/about fields are **Markdown** (render with `react-markdown`, to install in the phase that needs it).
+- Course: `isFeatured` (admin toggle → home "featured"), `order` is **per category** (`@@index([category, order])`).
+- Chapter: cascade-deleted with course; `@@unique([courseId, slug])`.
+- Resource: **one optional chapter** (`chapterId`, `onDelete: SetNull` → deleting a chapter keeps its resources as standalone). A published resource shows on `/resources` AND on its chapter page.
+- SiteSettings: single row, `id = 1`. Socials: `youtubeUrl`, `facebookUrl`, `instagramUrl`.
 - No Admin table: admin = Supabase Auth user whose email is in ADMIN_EMAILS.
+- Seed (`prisma/seed.ts`, idempotent): 5 courses / 12 chapters / 4 LINK resources / settings. Real YouTube IDs verified via oEmbed (Khan Academy, CrashCourse, Stanford). All sample descriptions start with "Sample content". Always verify YouTube IDs via `https://www.youtube.com/oembed?url=...` — never invent them.
 
 ## Routes
 
@@ -95,7 +104,7 @@ Public pages static/cached, revalidated on admin changes. next/image everywhere 
 
 ## Phases (STOP after each)
 
-0 Scaffold ✅ · 1 Database · 2 Admin auth · 3 Admin CRUD (courses, chapters, settings) · 4 Public pages · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
+0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth · 3 Admin CRUD (courses, chapters, settings) · 4 Public pages · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
 
 ## Git
 
@@ -104,5 +113,6 @@ Remote: https://github.com/kayumsarker/np-with-uchchhash.git, branch `main`. Aft
 ## Open questions (ask before the relevant phase)
 
 - Validation lib (rec: Zod v4); YouTube embed (rec: custom component); admin UI (plain Tailwind + native dialog vs shadcn/ui), toasts, icons (lucide-react?); Cloudinary approach (rec: SDK + custom fetch); tests (rec: Vitest for YouTube parser).
-- Featured courses (isFeatured field vs latest N); course order global vs per category; resource ↔ chapter (shown on /resources? one or many chapters); text format (plain/Markdown/rich text); slug auto + editable; which social links; admin draft preview.
-- Login method (password vs magic link); unpublished course → chapters 404; Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; seed content; analytics.
+- Slug auto + editable; admin draft preview.
+- Login method (password vs magic link); unpublished course → chapters 404; Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; analytics.
+- `server-only` import guard for `src/lib/db.ts` (ask in Phase 2).
