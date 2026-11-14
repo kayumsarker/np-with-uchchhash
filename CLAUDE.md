@@ -36,7 +36,17 @@ Free physics learning platform for tutor **Uchchhash**. All content free, no pay
   - Seeding is never automatic: `npm run db:seed`. Migrations: `npm run db:migrate`. Studio: `npm run db:studio`.
   - npm 11 `allowScripts`: install scripts approved for `prisma`, `@prisma/engines`, `esbuild`.
   - Verified: Next.js `"use cache"` function reading via `db` prerenders fine with Cache Components.
-- Supabase PostgreSQL + Supabase Auth (admin login only) via `@supabase/ssr`. New `sb_publishable_` key; prefer `getClaims()` for server checks (confirm in Phase 2).
+- Supabase PostgreSQL + Supabase Auth (admin login only) via `@supabase/ssr` 0.12 + `@supabase/supabase-js` 2.119. New `sb_publishable_` key. **Auth implementation (Phase 2):**
+  - Login: **email + password** via server action `login` in `src/actions/auth.ts` (`useActionState` form). Generic "Invalid email or password." error. A valid Supabase user NOT in ADMIN_EMAILS is signed out immediately. Logout: `signOut({ scope: "local" })`.
+  - Identity check: `supabase.auth.getClaims()` (verifies JWT signature) → `claims.email` vs ADMIN_EMAILS. Never trust `getSession()` on the server.
+  - `src/lib/admin-emails.ts` `isAdminEmail()` — pure, case-insensitive, fail-closed when ADMIN_EMAILS is empty.
+  - `src/lib/auth.ts`: `getAdmin()` (returns admin or null — use in Route Handlers to answer 401) and `requireAdmin()` (redirects to /admin/login). Call `requireAdmin()` at the top of EVERY admin server action and inside every admin page's data component.
+  - `src/lib/supabase/server.ts` `createSupabaseServerClient()` — new client per request.
+  - `src/proxy.ts` — matcher `/admin`, `/admin/:path*` only. Refreshes session, applies the no-cache headers from `setAll(cookies, headers)`, copies cookies onto redirects. Non-admin → /admin/login; admin on /admin/login → /admin.
+  - Admin routes: `src/app/admin/login/` (public) and `src/app/admin/(protected)/` (layout with nav + logout; all admin pages go here). Admin pages are `noindex`.
+  - Cache Components: anything reading cookies/session or uncached DB data must sit inside `<Suspense>` (pattern: page renders shell, async child calls `requireAdmin()` then queries).
+  - `import "server-only"` in `db.ts`, `auth.ts`, `supabase/server.ts` (built into Next, no package).
+  - Verified: anon / forged-cookie / forged-unsigned-JWT requests redirect; with proxy removed, `requireAdmin()` alone still leaks no data.
 - Cloudinary for images + PDFs, **signed uploads only**. Cloud name `np-with-uchchhash`, PDF delivery enabled.
 - YouTube lite embed: thumbnail first, iframe loads only on click, `youtube-nocookie.com` domain.
 - Lint/format: ESLint (flat config, `eslint-config-next`) + Prettier (`prettier-plugin-tailwindcss`, `eslint-config-prettier`). Scripts: `npm run lint`, `npm run format`, `npm run format:check`.
@@ -104,7 +114,7 @@ Public pages static/cached, revalidated on admin changes. next/image everywhere 
 
 ## Phases (STOP after each)
 
-0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth · 3 Admin CRUD (courses, chapters, settings) · 4 Public pages · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
+0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) · 4 Public pages · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
 
 ## Git
 
@@ -114,5 +124,4 @@ Remote: https://github.com/kayumsarker/np-with-uchchhash.git, branch `main`. Aft
 
 - Validation lib (rec: Zod v4); YouTube embed (rec: custom component); admin UI (plain Tailwind + native dialog vs shadcn/ui), toasts, icons (lucide-react?); Cloudinary approach (rec: SDK + custom fetch); tests (rec: Vitest for YouTube parser).
 - Slug auto + editable; admin draft preview.
-- Login method (password vs magic link); unpublished course → chapters 404; Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; analytics.
-- `server-only` import guard for `src/lib/db.ts` (ask in Phase 2).
+- Unpublished course → chapters 404; Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; analytics.
