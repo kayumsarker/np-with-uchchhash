@@ -114,7 +114,7 @@ Public pages static/cached, revalidated on admin changes. next/image everywhere 
 
 ## Phases (STOP after each)
 
-0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) ✅ · 4 Public pages · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
+0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) ✅ · 4 Public pages ✅ · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
 
 ## Git
 
@@ -128,7 +128,16 @@ Remote: https://github.com/kayumsarker/np-with-uchchhash.git, branch `main`. Aft
 - Admin forms submit via onSubmit (no React form reset); actions return `ActionState`. Edit pages show `MissingNotice` instead of `notFound()`.
 - `next.config.ts` images allow `i.ytimg.com/vi/**`. Thumbnail/photo uploads deferred to Phase 6 (TODOs).
 
+## Phase 4 decisions (done)
+
+- Public reads: `src/lib/data/public.ts` (`"use cache"`, `cacheLife("max")`, tags from cache-tags.ts incl. new `resources`). Only published content; chapter public only if chapter AND course published, else 404.
+- Course/chapter pages: `generateStaticParams` (placeholder `__none__` when empty, Cache Components requires ≥1), params awaited inside `<Suspense>`. Unknown slugs render not-found with noindex (status 200 due to streaming).
+- /courses tabs and /resources filters are client-side over static data, URL synced via `history.replaceState` (`?category=`, `?type=`).
+- Markdown: react-markdown + remark-gfm, `skipHtml` (`src/components/markdown.tsx`). Brand icons are inline SVG (lucide 1.x has none).
+- `getAdmin()` calls `await connection()` (Supabase getClaims reads the clock; not allowed in runtime prerender).
+- Home hero is static; Phase 5 replaces it. Tutor photo + course thumbnails still Phase 6.
+
 ## Open questions (ask before the relevant phase)
 
-- YouTube embed (rec: custom component); Cloudinary approach (rec: SDK + custom fetch).
-- Unpublished course → chapters 404; Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; analytics.
+- Cloudinary approach (rec: SDK + custom fetch).
+- Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; analytics.

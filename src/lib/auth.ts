@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -11,6 +12,9 @@ export type Admin = { id: string; email: string };
  * unlike getSession() which must never be trusted on the server.
  */
 export async function getAdmin(): Promise<Admin | null> {
+  // Auth is always request-time: keeps it out of (runtime) prerenders, where
+  // getClaims() reading the clock (token expiry) is not allowed.
+  await connection();
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data) return null;

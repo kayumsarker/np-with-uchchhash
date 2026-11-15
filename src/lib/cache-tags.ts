@@ -7,6 +7,8 @@ export const tags = {
   courses: "courses",
   /** One course page plus all of its chapter pages. */
   course: (courseId: string) => `course:${courseId}`,
+  /** Every resource list: /resources and chapter pages. */
+  resources: "resources",
   /** Site settings: footer socials, about page, home hero text. */
   settings: "settings",
 } as const;
