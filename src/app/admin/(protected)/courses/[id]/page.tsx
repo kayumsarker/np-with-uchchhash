@@ -77,6 +77,10 @@ async function CourseEditor({ params }: Pick<PageProps<"/admin/courses/[id]">, "
             category: course.category,
             isPublished: course.isPublished,
             isFeatured: course.isFeatured,
+            thumbnail:
+              course.thumbnailUrl && course.thumbnailPublicId
+                ? { url: course.thumbnailUrl, publicId: course.thumbnailPublicId }
+                : null,
           }}
         />
       </section>

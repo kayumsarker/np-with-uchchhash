@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import type { ActionState } from "@/lib/action-state";
 import type { FieldErrors } from "./fields";
 import { btn } from "./styles";
@@ -27,6 +28,11 @@ export function ActionForm({ action, submitLabel, pendingLabel, children }: Prop
       className="space-y-5"
       onSubmit={(event) => {
         event.preventDefault();
+        // UploadField marks itself busy while a file is still uploading.
+        if (event.currentTarget.querySelector('[data-uploading="true"]')) {
+          toast.error("Wait for the upload to finish.");
+          return;
+        }
         const formData = new FormData(event.currentTarget);
         run(
           () => action(formData),

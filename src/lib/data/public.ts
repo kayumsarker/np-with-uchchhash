@@ -58,7 +58,9 @@ export type CourseCard = {
   description: string;
   category: Category;
   chapterCount: number;
-  /** YouTube ID of the first chapter, used as the card image. */
+  /** Uploaded thumbnail (Cloudinary); preferred over the YouTube cover. */
+  thumbnailUrl: string | null;
+  /** YouTube ID of the first chapter, used as the card image when there is no thumbnail. */
   coverYoutubeId: string | null;
 };
 
@@ -68,6 +70,7 @@ const courseCardSelect = {
   slug: true,
   description: true,
   category: true,
+  thumbnailUrl: true,
   chapters: {
     where: { isPublished: true },
     orderBy: [{ order: "asc" as const }, { createdAt: "asc" as const }],
@@ -81,6 +84,7 @@ type CourseCardRow = {
   slug: string;
   description: string;
   category: Category;
+  thumbnailUrl: string | null;
   chapters: { youtubeId: string }[];
 };
 

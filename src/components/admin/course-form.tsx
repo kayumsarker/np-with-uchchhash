@@ -3,10 +3,12 @@
 import type { Category } from "@/generated/prisma/enums";
 import type { ActionState } from "@/lib/action-state";
 import { CATEGORIES, CATEGORY_LABELS } from "@/lib/categories";
+import type { StoredAsset } from "@/lib/uploads";
 import { ActionForm } from "./action-form";
 import { CheckboxField, Field, MARKDOWN_HINT, TextAreaField } from "./fields";
 import { SlugFields } from "./slug-fields";
 import { inputClass } from "./styles";
+import { UploadField } from "./upload-field";
 
 export type CourseFormValues = {
   title: string;
@@ -15,6 +17,7 @@ export type CourseFormValues = {
   category: Category;
   isPublished: boolean;
   isFeatured: boolean;
+  thumbnail: StoredAsset | null;
 };
 
 type Props = {
@@ -56,6 +59,14 @@ export function CourseForm({ action, course }: Props) {
               </select>
             )}
           </Field>
+          <UploadField
+            kind="courseThumbnail"
+            name="thumbnailPublicId"
+            label="Thumbnail (optional)"
+            initial={course?.thumbnail ?? null}
+            hint="16:9 works best. Without one, the first chapter's video thumbnail is used."
+            errors={errors}
+          />
           <TextAreaField
             name="description"
             label="Description"

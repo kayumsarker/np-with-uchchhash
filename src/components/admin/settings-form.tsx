@@ -3,6 +3,7 @@
 import type { ActionState } from "@/lib/action-state";
 import { ActionForm } from "./action-form";
 import { MARKDOWN_HINT, TextAreaField, TextField } from "./fields";
+import { UploadField } from "./upload-field";
 
 export type SettingsFormValues = {
   tutorName: string;
@@ -11,6 +12,8 @@ export type SettingsFormValues = {
   youtubeUrl: string | null;
   facebookUrl: string | null;
   instagramUrl: string | null;
+  photoUrl: string | null;
+  photoPublicId: string | null;
 };
 
 type Props = {
@@ -38,6 +41,19 @@ export function SettingsForm({ action, settings }: Props) {
             maxLength={160}
             defaultValue={settings?.tagline}
             hint="Short line shown on the home page."
+            errors={errors}
+          />
+          <UploadField
+            kind="tutorPhoto"
+            name="photoPublicId"
+            label="Tutor photo (optional)"
+            preview="avatar"
+            initial={
+              settings?.photoUrl && settings.photoPublicId
+                ? { url: settings.photoUrl, publicId: settings.photoPublicId }
+                : null
+            }
+            hint="Square photo, shown on the About page."
             errors={errors}
           />
           <TextAreaField

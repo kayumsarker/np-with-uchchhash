@@ -6,6 +6,12 @@ import type { Category } from "@/generated/prisma/enums";
 import { failure, success, validationFailure, type ActionState } from "@/lib/action-state";
 import { requireAdmin } from "@/lib/auth";
 import { tags } from "@/lib/cache-tags";
+import {
+  cleanupOldAsset,
+  deleteAsset,
+  CLEANUP_WARNING,
+  resolveAssetChange,
+} from "@/lib/cloudinary";
 import { db } from "@/lib/db";
 import { isNotFound, isUniqueViolation } from "@/lib/prisma-errors";
 import { slugify } from "@/lib/slug";
@@ -38,11 +44,21 @@ export async function createCourse(formData: FormData): Promise<ActionState> {
 
   const parsed = parseCourseForm(formData);
   if (!parsed.success) return validationFailure(parsed.error);
-  const input = parsed.data;
+  const { thumbnailPublicId, ...input } = parsed.data;
+
+  const thumb = await resolveAssetChange("courseThumbnail", thumbnailPublicId, null);
+  if (!thumb.ok) return failure(thumb.error, { thumbnailPublicId: [thumb.error] });
 
   try {
     const course = await db.course.create({
-      data: { ...input, order: await nextOrder(input.category) },
+      data: {
+        ...input,
+        ...(thumb.change.type === "set" && {
+          thumbnailUrl: thumb.change.asset.url,
+          thumbnailPublicId: thumb.change.asset.publicId,
+        }),
+        order: await nextOrder(input.category),
+      },
       select: { id: true },
     });
     revalidateCourse(course.id);
@@ -59,16 +75,31 @@ export async function updateCourse(courseId: string, formData: FormData): Promis
 
   const parsed = parseCourseForm(formData);
   if (!parsed.success) return validationFailure(parsed.error);
-  const input = parsed.data;
+  const { thumbnailPublicId, ...input } = parsed.data;
 
-  const existing = await db.course.findUnique({ where: { id }, select: { category: true } });
+  const existing = await db.course.findUnique({
+    where: { id },
+    select: { category: true, thumbnailPublicId: true },
+  });
   if (!existing) return failure(NOT_FOUND);
+
+  const thumb = await resolveAssetChange(
+    "courseThumbnail",
+    thumbnailPublicId,
+    existing.thumbnailPublicId,
+  );
+  if (!thumb.ok) return failure(thumb.error, { thumbnailPublicId: [thumb.error] });
 
   try {
     await db.course.update({
       where: { id },
       data: {
         ...input,
+        ...(thumb.change.type === "set" && {
+          thumbnailUrl: thumb.change.asset.url,
+          thumbnailPublicId: thumb.change.asset.publicId,
+        }),
+        ...(thumb.change.type === "remove" && { thumbnailUrl: null, thumbnailPublicId: null }),
         // Moving to another category puts the course at the end of that category.
         ...(existing.category !== input.category && { order: await nextOrder(input.category) }),
       },
@@ -80,7 +111,8 @@ export async function updateCourse(courseId: string, formData: FormData): Promis
   }
 
   revalidateCourse(id);
-  return success("Course saved.");
+  const warning = await cleanupOldAsset(thumb.change, existing.thumbnailPublicId);
+  return success("Course saved.", undefined, warning);
 }
 
 export async function deleteCourse(courseId: string): Promise<ActionState> {
@@ -88,16 +120,20 @@ export async function deleteCourse(courseId: string): Promise<ActionState> {
   const id = idSchema.parse(courseId);
 
   // Chapters cascade-delete; their resources become standalone (chapterId → null).
-  // TODO(Phase 6): delete the course thumbnail from Cloudinary.
+  let thumbnailPublicId: string | null;
   try {
-    await db.course.delete({ where: { id } });
+    ({ thumbnailPublicId } = await db.course.delete({
+      where: { id },
+      select: { thumbnailPublicId: true },
+    }));
   } catch (error) {
     if (isNotFound(error)) return failure(NOT_FOUND);
     throw error;
   }
 
   revalidateCourse(id);
-  return success("Course deleted.", "/admin/courses");
+  const removed = await deleteAsset(thumbnailPublicId);
+  return success("Course deleted.", "/admin/courses", removed ? undefined : CLEANUP_WARNING);
 }
 
 const toggleField = z.enum(["isPublished", "isFeatured"]);

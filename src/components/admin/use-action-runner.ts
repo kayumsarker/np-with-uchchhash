@@ -24,6 +24,7 @@ export function useActionRunner() {
       }
       if (result.status === "success") {
         toast.success(result.message);
+        if (result.warning) toast.warning(result.warning, { duration: 10_000 });
         if (result.redirectTo) router.push(result.redirectTo);
       } else if (result.status === "error") {
         toast.error(result.message);

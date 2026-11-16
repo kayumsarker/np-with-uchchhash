@@ -37,6 +37,15 @@ export const slug = z
   .max(SLUG_MAX_LENGTH, `Slug must be at most ${SLUG_MAX_LENGTH} characters.`)
   .regex(SLUG_REGEX, "Use lowercase letters, numbers and single hyphens only (e.g. newtons-laws).");
 
+/** Cloudinary public ID from an UploadField hidden input. Empty → null. Verified server-side before use. */
+export const publicId = z
+  .string()
+  .trim()
+  .max(255, "Invalid upload.")
+  .regex(/^[A-Za-z0-9_\-/]*$/, "Invalid upload.")
+  .optional()
+  .transform((value) => (value ? value : null));
+
 /** IDs and other values arriving as bound action arguments — never trust them blindly. */
 export const id = z.string().min(1).max(64);
 export const direction = z.enum(["up", "down"]);

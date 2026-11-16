@@ -114,7 +114,7 @@ Public pages static/cached, revalidated on admin changes. next/image everywhere 
 
 ## Phases (STOP after each)
 
-0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) ✅ · 4 Public pages ✅ · 5 Hero animation ✅ · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
+0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) ✅ · 4 Public pages ✅ · 5 Hero animation ✅ · 6 Resources + Cloudinary ✅ · 7 SEO/perf/security review, then step-by-step Vercel setup.
 
 ## Git
 
@@ -145,7 +145,17 @@ Remote: https://github.com/kayumsarker/np-with-uchchhash.git, branch `main`. Aft
 - `gsap.matchMedia` picks desktop/mobile particle count + reduced-motion static frame. Electrons move on ellipses via proxy-angle tween; rings spin with `svgOrigin`. Particles on one canvas via `gsap.ticker`, DPR capped at 2, colors read from theme CSS vars.
 - Pause: IntersectionObserver + `visibilitychange` pause all tweens and remove ticker. Cleanup returned from `mm.add` + `mm.revert()`.
 
+## Phase 6 decisions (done)
+
+- `cloudinary` **2.11.0** (pinned exact), server-only in `src/lib/cloudinary.ts`. Browser uploads via XHR (progress) straight to `https://api.cloudinary.com/v1_1/<cloud>/image/upload`.
+- Upload kinds in `src/lib/uploads.ts` (shared client/server): `courseThumbnail` (folder `courses`), `tutorPhoto` (`tutor`), `resourceImage` (`resources/images`), `resourcePdf` (`resources/pdfs`). Images jpg/png/webp/avif ≤ 5 MB; PDF ≤ 10 MB. Everything is resource_type `image` (PDFs too).
+- `POST /api/cloudinary/sign` (`getAdmin()` → 401; proxy doesn't cover /api) signs `timestamp + folder + allowed_formats`. Cloudinary Upload API has NO max-size param → size checked in browser AND on save: `verifyUpload()` uses Admin API `resource()` to check folder, format, bytes (oversized → deleted). Never trust a submitted public ID.
+- Forms submit only the public ID (hidden input, `UploadField`); `resolveAssetChange()` → keep/remove/set; after DB write `cleanupOldAsset()` deletes the old file. Delete failure → DB change proceeds, `success(..., warning)` → warning toast; "not found" = success. `ActionForm` blocks submit while `[data-uploading="true"]`.
+- Unsaved uploads (picked then form abandoned) stay in Cloudinary as orphans — accepted.
+- Resources: one global `order` (↑↓ on `/admin/resources`), type radio PDF/IMAGE/LINK, LINK only http(s). Course card prefers `thumbnailUrl` over YouTube cover; About page shows tutor photo. `next.config.ts` allows `res.cloudinary.com/<cloud>/image/upload/**`.
+- Next 16: `next/image` `priority` is deprecated → use `preload`.
+- Live-verified against the account (dynamic folders: public_id is still prefixed with folder): tampered signature 401, wrong format 400, wrong-folder/missing rejected, destroy idempotent.
+
 ## Open questions (ask before the relevant phase)
 
-- Cloudinary approach (rec: SDK + custom fetch).
-- Cloudinary delete failure behavior; upload size limit; logo/favicon/OG image; analytics.
+- Phase 7: logo/favicon, OG image (next/og), analytics (e.g. Vercel Web Analytics or none).

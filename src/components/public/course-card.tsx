@@ -13,9 +13,9 @@ export function CourseCard({ course }: { course: CourseCardData }) {
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-[0_8px_40px_-12px_rgba(47,128,255,0.45)]"
     >
       <div className="relative aspect-video bg-gradient-to-br from-primary/30 via-surface to-secondary/30">
-        {course.coverYoutubeId ? (
+        {course.thumbnailUrl || course.coverYoutubeId ? (
           <Image
-            src={youtubeThumbnailUrl(course.coverYoutubeId)}
+            src={course.thumbnailUrl ?? youtubeThumbnailUrl(course.coverYoutubeId!)}
             alt=""
             fill
             sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"

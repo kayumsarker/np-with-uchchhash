@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requiredText } from "./fields";
+import { publicId, requiredText } from "./fields";
 
 /** Optional https link whose host must belong to the given platform. Empty → null. */
 const socialUrl = (platform: string, hosts: string[]) =>
@@ -35,6 +35,7 @@ export const settingsSchema = z.object({
   youtubeUrl: socialUrl("YouTube", ["youtube.com"]),
   facebookUrl: socialUrl("Facebook", ["facebook.com", "fb.com"]),
   instagramUrl: socialUrl("Instagram", ["instagram.com"]),
+  photoPublicId: publicId,
 });
 
 export type SettingsInput = z.infer<typeof settingsSchema>;
