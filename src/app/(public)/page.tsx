@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { HeroVisual } from "@/components/hero/hero-visual";
 import { CourseCard } from "@/components/public/course-card";
 import { CATEGORIES, CATEGORY_LABELS } from "@/lib/categories";
 import { getFeaturedCourses, getPublishedCourses, getSiteSettings } from "@/lib/data/public";
@@ -19,40 +20,38 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero — static for now; the animated version arrives in Phase 5. */}
       <section
         aria-labelledby="hero-heading"
-        className="relative overflow-hidden border-b border-border/60"
+        className="relative flex min-h-[85svh] items-center overflow-hidden border-b border-border/60"
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(47,128,255,0.18),transparent_60%),radial-gradient(ellipse_at_bottom_right,rgba(168,85,247,0.14),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(47,128,255,0.16),transparent_60%),radial-gradient(ellipse_at_bottom_right,rgba(168,85,247,0.14),transparent_55%)]"
         />
-        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28 lg:py-36">
-          <p className="font-mono text-sm text-accent">F = ma · E = mc² · ∇·E = ρ/ε₀</p>
-          <h1
-            id="hero-heading"
-            className="mt-4 max-w-3xl text-4xl leading-tight font-bold sm:text-6xl"
-          >
-            Natural Philosophy with{" "}
-            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              {settings.tutorName}
-            </span>
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-muted">{settings.tagline}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/courses"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white transition hover:bg-primary/90"
-            >
-              Browse courses <ArrowRight className="size-4" aria-hidden />
-            </Link>
-            <Link
-              href="/resources"
-              className="inline-flex items-center gap-2 rounded-xl border border-border px-6 py-3 font-semibold transition hover:border-primary hover:text-primary"
-            >
-              Free resources
-            </Link>
+        <HeroVisual />
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-20">
+          <div className="max-w-xl md:max-w-[52%]">
+            <h1 id="hero-heading" className="text-4xl leading-tight font-bold sm:text-6xl">
+              Natural Philosophy with{" "}
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                {settings.tutorName}
+              </span>
+            </h1>
+            <p className="mt-5 max-w-xl text-lg text-muted">{settings.tagline}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/courses"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white transition hover:bg-primary/90"
+              >
+                Browse courses <ArrowRight className="size-4" aria-hidden />
+              </Link>
+              <Link
+                href="/resources"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-background/60 px-6 py-3 font-semibold backdrop-blur-sm transition hover:border-primary hover:text-primary"
+              >
+                Free resources
+              </Link>
+            </div>
           </div>
         </div>
       </section>

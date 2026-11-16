@@ -114,7 +114,7 @@ Public pages static/cached, revalidated on admin changes. next/image everywhere 
 
 ## Phases (STOP after each)
 
-0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) ✅ · 4 Public pages ✅ · 5 Hero animation · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
+0 Scaffold ✅ · 1 Database ✅ · 2 Admin auth ✅ · 3 Admin CRUD (courses, chapters, settings) ✅ · 4 Public pages ✅ · 5 Hero animation ✅ · 6 Resources + Cloudinary · 7 SEO/perf/security review, then step-by-step Vercel setup.
 
 ## Git
 
@@ -136,6 +136,14 @@ Remote: https://github.com/kayumsarker/np-with-uchchhash.git, branch `main`. Aft
 - Markdown: react-markdown + remark-gfm, `skipHtml` (`src/components/markdown.tsx`). Brand icons are inline SVG (lucide 1.x has none).
 - `getAdmin()` calls `await connection()` (Supabase getClaims reads the clock; not allowed in runtime prerender).
 - Home hero is static; Phase 5 replaces it. Tutor photo + course thumbnails still Phase 6.
+
+## Phase 5 decisions (done)
+
+- gsap **3.15.0** + @gsap/react **2.1.2**, pinned exact (3.15.1 was <2 weeks old at install).
+- `src/components/hero/hero-visual.tsx` (client, `aria-hidden`): split layout — text left, orbit right on desktop (md+); faint (30%) orbit behind text on mobile. Hero `min-h-[85svh]`.
+- Formulas: F = ma, E = mc², ∇·E = ρ/ε₀, λ = h/p, PV = nRT, F = Gm₁m₂/r² (mobile shows first 3 via CSS).
+- `gsap.matchMedia` picks desktop/mobile particle count + reduced-motion static frame. Electrons move on ellipses via proxy-angle tween; rings spin with `svgOrigin`. Particles on one canvas via `gsap.ticker`, DPR capped at 2, colors read from theme CSS vars.
+- Pause: IntersectionObserver + `visibilitychange` pause all tweens and remove ticker. Cleanup returned from `mm.add` + `mm.revert()`.
 
 ## Open questions (ask before the relevant phase)
 
