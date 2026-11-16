@@ -8,7 +8,6 @@ import { ResourceCard } from "@/components/public/resource-card";
 import { YouTubeLite } from "@/components/public/youtube-lite";
 import { getChapter, getPublishedChapterParams } from "@/lib/data/public";
 import { plainExcerpt } from "@/lib/text";
-import { youtubeThumbnailUrl } from "@/lib/youtube";
 
 type Props = PageProps<"/courses/[slug]/[chapter]">;
 
@@ -33,12 +32,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: "video.other",
-      images: [{ url: youtubeThumbnailUrl(data.chapter.youtubeId), width: 480, height: 360 }],
-    },
+    alternates: { canonical: `/courses/${data.course.slug}/${data.chapter.slug}` },
+    // Preview image comes from the sibling opengraph-image.tsx.
+    openGraph: { title, description, url: `/courses/${data.course.slug}/${data.chapter.slug}` },
   };
 }
 

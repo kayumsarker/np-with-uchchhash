@@ -156,6 +156,14 @@ Remote: https://github.com/kayumsarker/np-with-uchchhash.git, branch `main`. Aft
 - Next 16: `next/image` `priority` is deprecated → use `preload`.
 - Live-verified against the account (dynamic folders: public_id is still prefixed with folder): tampered signature 401, wrong format 400, wrong-folder/missing rejected, destroy idempotent.
 
-## Open questions (ask before the relevant phase)
+## Phase 7 decisions (code done; Vercel setup pending)
 
-- Phase 7: logo/favicon, OG image (next/og), analytics (e.g. Vercel Web Analytics or none).
+- Icons: `src/app/icon.svg` (atom mark) + `apple-icon.tsx` (ImageResponse). Default favicon.ico removed.
+- OG: shared `ogCard()` in `src/lib/og.tsx` (built-in font, no font files). `src/app/opengraph-image.tsx` (default), course + chapter `opengraph-image.tsx` re-export the page's `generateStaticParams` → prerendered, revalidated via cache tags.
+- `src/lib/site.ts`: SITE_NAME / SITE_URL (from NEXT_PUBLIC_SITE_URL — baked in at build). Root metadata: metadataBase, openGraph, twitter summary_large_image. Canonical URLs on public pages.
+- `sitemap.ts` (published only), `robots.ts` (disallow /admin, /api/).
+- Security headers in `next.config.ts` for all routes: static CSP (`'unsafe-inline'` scripts; nonces would make pages dynamic; experimental SRI skipped), HSTS (no `preload`), nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, `poweredByHeader: false`. CSP allows i.ytimg.com + res.cloudinary.com images, api.cloudinary.com connect, youtube-nocookie frames. Add new third-party origins here.
+- No analytics.
+- Verified in browser under CSP: hero canvas, images, YouTube embed — no violations. Lighthouse not run locally (developer runs PageSpeed Insights on the Vercel URL).
+- Windows gotcha: never round-trip files through PowerShell 5.1 `Get-Content`/`Set-Content` (reads UTF-8 as ANSI → mojibake, adds BOM). Use Edit tool or Python.
+- Vercel: function region should be `bom1` (Mumbai) to match the DB.

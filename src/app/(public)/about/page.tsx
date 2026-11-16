@@ -9,6 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "About",
     description: `About ${settings.tutorName} — ${settings.tagline}`,
+    alternates: { canonical: "/about" },
   };
 }
 

@@ -7,6 +7,7 @@ import { getPublishedCourses } from "@/lib/data/public";
 export const metadata: Metadata = {
   title: "Courses",
   description: "Free physics video courses for SSC, HSC and advanced learners.",
+  alternates: { canonical: "/courses" },
 };
 
 export default async function CoursesPage() {

@@ -6,6 +6,7 @@ import { getPublishedResources } from "@/lib/data/public";
 export const metadata: Metadata = {
   title: "Resources",
   description: "Free physics notes, PDFs and links for SSC, HSC and advanced learners.",
+  alternates: { canonical: "/resources" },
 };
 
 export default async function ResourcesPage() {
